@@ -1,8 +1,10 @@
+using MovieWatchlist.Entities;
+
 namespace MovieWatchlist.Abstractions;
 
-public interface IMovieRepository<T>
+public interface IWatchlistRepository<T>
 {
-    Task<IReadOnlyList<T>?> GetByUsetAsync(string userId, WatchStatus? status == null);
+    Task<IReadOnlyList<T>?> GetByUserAsync(string userId, WatchStatus? status = null);
     Task<T?> GetByIdAsync(int id, string userId);
     Task<bool> ExistsAsync(string userId, string movieId);
     Task<T> AddAsync(T model);
