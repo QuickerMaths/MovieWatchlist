@@ -1,3 +1,4 @@
+using MovieWatchlist.Api.Endpoints;
 using MovieWatchlist.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,6 +7,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure();
 
 var app = builder.Build();
+
+app.MapWatchlistEndpoints();
+app.MapMovieEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
