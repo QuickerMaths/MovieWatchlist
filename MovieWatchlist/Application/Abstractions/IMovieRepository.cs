@@ -1,4 +1,4 @@
-namespace MovieWatchlist.Abstractions;
+namespace MovieWatchlist.Application.Abstractions;
 
 public interface IMovieRepository<T>
 {

@@ -1,7 +1,7 @@
-using MovieWatchlist.Abstractions;
-using MovieWatchlist.Entities;
+using MovieWatchlist.Application.Abstractions;
+using MovieWatchlist.Domain.Entities;
 
-namespace MovieWatchlist.Repositories;
+namespace MovieWatchlist.Infrastructure.Repositories;
 
 public class InMemoryMovieWatchlistRepository : IWatchlistRepository<MovieWatchlistItem>
 {

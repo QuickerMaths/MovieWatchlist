@@ -1,6 +1,6 @@
-using MovieWatchlist.Abstractions;
-using MovieWatchlist.Entities;
-using MovieWatchlist.Repositories;
+using MovieWatchlist.Application.Abstractions;
+using MovieWatchlist.Domain.Entities;
+using MovieWatchlist.Infrastructure.Repositories;
 
 namespace MovieWatchlist.Infrastructure;
 

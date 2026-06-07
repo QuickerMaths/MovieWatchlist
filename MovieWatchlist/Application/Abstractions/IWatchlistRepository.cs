@@ -1,6 +1,6 @@
-using MovieWatchlist.Entities;
+using MovieWatchlist.Domain.Entities;
 
-namespace MovieWatchlist.Abstractions;
+namespace MovieWatchlist.Application.Abstractions;
 
 public interface IWatchlistRepository<T>
 {

@@ -1,4 +1,4 @@
-namespace MovieWatchlist.Entities;
+namespace MovieWatchlist.Domain.Entities;
 
 public class MovieWatchlistItem
 {
