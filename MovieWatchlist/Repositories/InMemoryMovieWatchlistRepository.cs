@@ -60,7 +60,7 @@ public class InMemoryMovieWatchlistRepository : IWatchlistRepository<MovieWatchl
         return model;
     }
 
-    public async Task<Task> UpdateAsync(MovieWatchlistItem model)
+    public async Task UpdateAsync(MovieWatchlistItem model)
     {
         if (await ExistsAsync("userId", "watchListItemId"))
         {
@@ -68,8 +68,6 @@ public class InMemoryMovieWatchlistRepository : IWatchlistRepository<MovieWatchl
         }
         
         _items[model.Id] = model;
-
-        return Task.CompletedTask;
     }
 
     public Task DeleteAsync(string movieId, string userId)
