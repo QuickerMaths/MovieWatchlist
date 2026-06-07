@@ -5,13 +5,34 @@ namespace MovieWatchlist.Repositories;
 
 public class InMemoryMovieRepository : IMovieRepository<Movie>
 {
-    public Task<Movie?> GetByTmdbIdAsync(int tmdbId)
+    private readonly Dictionary<string, Movie> _movies = new();
+
+    public InMemoryMovieRepository()
     {
-        throw new NotImplementedException();
+        var movie = new Movie
+        {
+            Id = "movieId",
+            TmdbId = 1,
+            Overview = "Overview",
+            PosterPath = "PosterPath",
+            Title = "Title",
+            ReleaseDate = DateTime.Now,
+        };
+        
+        _movies.Add(movie.Id, movie);
+    }
+    
+    public async Task<Movie?> GetByTmdbIdAsync(int tmdbId)
+    {
+        var movie = _movies.Values.FirstOrDefault(m => m.TmdbId == tmdbId);
+
+        return await Task.FromResult(movie);
     }
 
-    public Task<Movie> AddAsync(Movie model)
+    public Task AddAsync(Movie model)
     {
-        throw new NotImplementedException();
+        _movies.Add(model.Id, model);
+
+        return Task.CompletedTask;
     }
 }
