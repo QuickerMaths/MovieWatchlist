@@ -8,6 +8,6 @@ public interface IWatchlistRepository<T>
     Task<T?> GetByIdAsync(int id, string userId);
     Task<bool> ExistsAsync(string userId, string movieId);
     Task<T> AddAsync(T model);
-    Task<Task> UpdateAsync(T model);
+    Task UpdateAsync(T model);
     Task DeleteAsync(string movieId, string userId);
 }
