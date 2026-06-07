@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MovieWatchlist.csproj" />
+    <ProjectReference Include="..\MovieWatchlist\MovieWatchlist.csproj" />
   </ItemGroup>
 
 </Project>
