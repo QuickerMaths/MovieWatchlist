@@ -10,6 +10,7 @@ var app = builder.Build();
 
 app.MapWatchlistEndpoints();
 app.MapMovieEndpoints();
+app.MapAuthEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
