@@ -64,6 +64,19 @@ public class WatchlistEndpointTests(
             UserId = TestAuthHandler.TestUserId,
             MovieId = 1,
             WatchStatus = WatchStatus.WantToWatch
+        },
+        new MovieWatchlistItem
+        {
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 2,
+            WatchStatus = WatchStatus.Finished
+        },
+        new MovieWatchlistItem
+        {
+            Id = "some-other-user-item-id",
+            UserId = "some-other-user",
+            MovieId = 2,
+            WatchStatus = WatchStatus.Finished
         });
         var client = _authFactory.CreateClient();
         
@@ -74,8 +87,10 @@ public class WatchlistEndpointTests(
         var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
         
         Assert.NotNull(items);
-        Assert.Single(items);
-        Assert.Equal(WatchStatus.WantToWatch, items[0].WatchStatus);
+        Assert.Equal(2, items.Count);
+        Assert.Contains(items, i => i.WatchStatus == WatchStatus.WantToWatch);
+        Assert.Contains(items, i => i.WatchStatus == WatchStatus.Finished);
+        Assert.DoesNotContain(items, i => i.Id == "some-other-user-item-id");
     }
     
     [Fact]
@@ -91,6 +106,11 @@ public class WatchlistEndpointTests(
             UserId = TestAuthHandler.TestUserId,
             MovieId = 2,
             WatchStatus = WatchStatus.Finished,
+        },new MovieWatchlistItem
+        {
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 3,
+            WatchStatus = WatchStatus.Finished,
         });
         var client = _authFactory.CreateClient();
         
@@ -101,8 +121,8 @@ public class WatchlistEndpointTests(
         var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
         
         Assert.NotNull(items);
-        Assert.Single(items);
-        Assert.Equal(WatchStatus.Finished, items[0].WatchStatus);
+        Assert.Equal(2, items.Count);
+        Assert.All(items, i => Assert.Equal(WatchStatus.Finished, i.WatchStatus));
     }
 
     [Fact]
