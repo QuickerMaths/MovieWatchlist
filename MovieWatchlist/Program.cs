@@ -5,8 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
 
 app.MapWatchlistEndpoints();
 app.MapMovieEndpoints();
