@@ -9,8 +9,6 @@ using Tests.Helpers;
 
 namespace Tests.Api;
 
-// TODO: create correct DTOs rather that referencing a model in repo
-
 public class WatchlistEndpointTests(
     TestWebAppFactory authFactory,
     WebApplicationFactory<Program> plainFactory)
@@ -52,7 +50,7 @@ public class WatchlistEndpointTests(
         
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var items = await response.Content.ReadFromJsonAsync<List<MovieWatchlistItem>>(TestContext.Current.CancellationToken);
+        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
         
         Assert.NotNull(items);
         Assert.Empty(items);
@@ -73,7 +71,7 @@ public class WatchlistEndpointTests(
         
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var items = await response.Content.ReadFromJsonAsync<List<MovieWatchlistItem>>(TestContext.Current.CancellationToken);
+        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
         
         Assert.NotNull(items);
         Assert.Single(items);
@@ -100,7 +98,7 @@ public class WatchlistEndpointTests(
         
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var items = await response.Content.ReadFromJsonAsync<List<MovieWatchlistItem>>(TestContext.Current.CancellationToken);
+        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
         
         Assert.NotNull(items);
         Assert.Single(items);
