@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
@@ -207,13 +208,76 @@ public class WatchlistEndpointTests(
      * Tests for WatchlistItem POST request "/watchlist"
      * Add a movie to the watchlist
      */
+
+    [Fact]
+    public async Task AddWatchlistItem_Returns201AndCreatedItem_WhenUnauthorized()
+    {
+        const int tmdbId = 1;
+        var requestBody = new AddWatchlistItemRequest(TmbdId: tmdbId, WatchStatus.WantToWatch);
+        var client = _authFactory.CreateClient();
+     
+        var response = await client.PostAsJsonAsync("/watchlist", requestBody, cancellationToken: TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        
+        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(items);
+        Assert.Single(items);
+        Assert.Contains(items, i => i.Movie.TmdbId == tmdbId);
+    }
+
+    [Fact]
+    public async Task AddWatchlistItem_Returns400WhenTmdbIdIsInvalid_WhenUnauthorized()
+    {
+        var requestBody = new AddWatchlistItemRequest(TmbdId: 0, WatchStatus.WantToWatch);
+        var client = _authFactory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/watchlist", requestBody, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+    
+    
+    [Fact]
+    public async Task AddWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenUnauthorized()
+    {
+        var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var client = _authFactory.CreateClient();
+
+        var response = await client.PostAsync(
+            "/watchlist", content, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+
+    [Fact]
+    public async Task AddWatchlistItem_Returns409WhenItemIsAlreadyInTheUsersList_WhenUnauthorized()
+    {
+        await SeedAsync(new MovieWatchlistItem
+        {
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        const int tmdbId = 1;
+        var requestBody = new AddWatchlistItemRequest(TmbdId: tmdbId, WatchStatus.Finished);
+        var client = _authFactory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/watchlist", requestBody,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
     
     [Fact]
     public async Task AddWatchlistItem_Returns401_WhenUnauthorized()
     {
-        var client = _factory.CreateClient();
-
         var requestBody = new AddWatchlistItemRequest(1, WatchStatus.WantToWatch);
+        var client = _factory.CreateClient();
         
         var response = await client.PostAsJsonAsync("/watchlist", requestBody, cancellationToken: TestContext.Current.CancellationToken);
         
