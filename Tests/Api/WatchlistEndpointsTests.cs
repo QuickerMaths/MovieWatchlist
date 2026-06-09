@@ -178,17 +178,17 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task? GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthorized()
     {
+        const string someOtherUserId = "some-other-user-id";
         await SeedAsync(new MovieWatchlistItem
         {
-            Id = "other-users-item",
+            Id = someOtherUserId,
             UserId = "otherUsersId",
             MovieId = 1,
             WatchStatus = WatchStatus.Finished
         });
-        
         var client = _authFactory.CreateClient();
         
-        var response = await client.GetAsync($"watchlist/other-users-item", TestContext.Current.CancellationToken);
+        var response = await client.GetAsync($"watchlist/{someOtherUserId}", TestContext.Current.CancellationToken);
         
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -244,11 +244,11 @@ public class WatchlistEndpointTests(
     public async Task AddWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenUnauthorized()
     {
         var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
         var client = _authFactory.CreateClient();
 
         var response = await client.PostAsync(
-            "/watchlist", content, TestContext.Current.CancellationToken);
+            "/watchlist", requestBody, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -288,7 +288,91 @@ public class WatchlistEndpointTests(
      * Tests for WatchlistItem PUT request "/watchlist/{id}"
      * Update status / rating / note
      */
+
+    [Fact]
+    public async Task UpdateWatchlistItem_Returns204_WhenUnauthorized()
+    {
+        var requestBody = new UpdateWatchlistItemRequest(WatchStatus: WatchStatus.Watching, Rating: null, Note: null);
+        const string watchlistItemId = "items-id";
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = watchlistItemId,
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.PutAsJsonAsync($"/watchlist/{watchlistItemId}", requestBody, TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
     
+    [Fact]
+    public async Task UpdateWatchlistItem_Returns400_WhenRatingIsOutOfRange()
+    {
+        const string itemId = "my-item-id"; 
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = itemId,
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        var requestBody = new UpdateWatchlistItemRequest(
+            WatchStatus: WatchStatus.Finished,
+            Rating: 11,
+            Note: "Great movie");
+        var client = _authFactory.CreateClient();
+
+        var response = await client.PutAsJsonAsync(
+            $"/watchlist/{itemId}", requestBody, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+    
+    [Fact]
+    public async Task UpdateWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenUnauthorized()
+    {
+        const string itemId = "my-item-id"; 
+        var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
+        var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = itemId,
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        var client = _authFactory.CreateClient();
+
+        var response = await client.PutAsJsonAsync(
+            $"watchlist/{itemId}", requestBody, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateWatchlistItem_Returns404WhenTheItemIsNotOwnedByTheUser_WhenUnauthorized()
+    {
+        var requestBody = new UpdateWatchlistItemRequest(WatchStatus: WatchStatus.Watching, Rating: null, Note: null);
+        const string someOtherUserId = "some-other-user-id";
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = someOtherUserId,
+            UserId = "otherUsersId",
+            MovieId = 1,
+            WatchStatus = WatchStatus.Finished
+        });
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.PutAsJsonAsync($"$watchlist/{someOtherUserId}", requestBody, TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+    
+    
+
     [Fact]
     public async Task UpdateWatchlistItem_Returns401_WhenUnauthorized()
     {
@@ -305,6 +389,43 @@ public class WatchlistEndpointTests(
      * Tests for WatchlistItem DELETE request "/watchlist/{id}"
      * Remove an item
      */
+    
+    [Fact]
+    public async Task DeleteWatchlistItem_Returns204_WhenAuthorized()
+    {
+        const string watchlistItemId = "items-id";
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = watchlistItemId,
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.DeleteAsync($"/watchlist/{watchlistItemId}", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+    
+    [Fact]
+    public async Task DeleteWatchlistItem_Returns204WhenTheItemIsNotOwnedByTheUser_WhenUnauthorized()
+    {
+        const string watchlistItemId = "items-id";
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = watchlistItemId,
+            UserId = "other-user-id",
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.DeleteAsync($"/watchlist/{watchlistItemId}", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
 
     [Fact]
     public async Task DeleteWatchlistItem_Returns401_WhenUnauthorized()
