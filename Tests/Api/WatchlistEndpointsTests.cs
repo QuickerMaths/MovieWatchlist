@@ -3,12 +3,19 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
+using Tests.Helpers;
 
 namespace Tests.Api;
 
-public class WatchlistEndpointsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class WatchlistEndpointTests(
+    TestWebAppFactory authFactory,
+    WebApplicationFactory<Program> plainFactory)
+    :
+        IClassFixture<TestWebAppFactory>,
+        IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory = factory;
+    private readonly TestWebAppFactory _authFactory = authFactory;
+    private readonly WebApplicationFactory<Program> _factory = plainFactory;
 
     /*
      * Tests for WatchlistItem GET request "/watchlist"
