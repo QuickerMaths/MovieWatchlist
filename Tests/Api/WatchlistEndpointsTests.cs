@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
 using Tests.Helpers;
@@ -21,6 +23,46 @@ public class WatchlistEndpointTests(
      * Tests for WatchlistItem GET request "/watchlist"
      * Lists the current user's items
      */
+
+    [Fact]
+    public async Task GetWatchlistItem_Returns200WithAnEmptyList_WhenAuthenticated()
+    {
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.GetAsync("/watchlist", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var items = await response.Content.ReadFromJsonAsync<List<object>>(TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(items);
+        Assert.Empty(items);
+    }
+    
+    [Fact]
+    public async Task GetWatchlistItem_Returns200WithAnListOfItems_WhenAuthenticated()
+    {
+        var repo = _authFactory.Services.GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
+        await repo.AddAsync(new MovieWatchlistItem
+        {
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch,
+            Id = "randomId",
+            AddedAt = DateTime.Now
+        });
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.GetAsync("/watchlist", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var items = await response.Content.ReadFromJsonAsync<List<MovieWatchlistItem>>(TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(items);
+        Assert.Single(items);
+        Assert.Equal(WatchStatus.WantToWatch, items[0].WatchStatus);
+    }
 
     [Fact]
     public async Task GetWatchlistItem_Returns401_WhenUnauthorized()
