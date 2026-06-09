@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
 using MovieWatchlist.Infrastructure.Repositories;
@@ -20,12 +19,7 @@ public class WatchlistEndpointTests(
 {
     private readonly TestWebAppFactory _authFactory = authFactory;
     private readonly WebApplicationFactory<Program> _factory = plainFactory;
-
-    /*
-     * Tests for WatchlistItem GET request "/watchlist"
-     * Lists the current user's items
-     */
-
+    
     public void Dispose()
     {
         var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
@@ -40,6 +34,12 @@ public class WatchlistEndpointTests(
         foreach (var item in items)
             await repo.AddAsync(item);
     }
+
+
+    /*
+     * Tests for WatchlistItem GET request "/watchlist"
+     * Lists the current user's items
+     */
 
     [Fact]
     public async Task GetWatchlistItem_Returns200WithAnEmptyList_WhenAuthenticated()
@@ -59,7 +59,6 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task GetWatchlistItem_Returns200WithAnListOfItems_WhenAuthenticated()
     {
-        var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
         await SeedAsync(new MovieWatchlistItem
         {
             Id = "somerandomId",
@@ -79,6 +78,37 @@ public class WatchlistEndpointTests(
         Assert.NotNull(items);
         Assert.Single(items);
         Assert.Equal(WatchStatus.WantToWatch, items[0].WatchStatus);
+    }
+    
+    [Fact]
+    public async Task GetWatchlistItem_Returns200WithAnListOfItemsAndStatusFinished_WhenAuthenticated()
+    {
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = "somerandomId",
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 1,
+            WatchStatus = WatchStatus.WantToWatch,
+            AddedAt = default
+        },new MovieWatchlistItem
+        {
+            Id = "somerandomId2",
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = 2,
+            WatchStatus = WatchStatus.Finished,
+            AddedAt = default
+        });
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.GetAsync("/watchlist?status=Finished", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var items = await response.Content.ReadFromJsonAsync<List<MovieWatchlistItem>>(TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(items);
+        Assert.Single(items);
+        Assert.Equal(WatchStatus.Finished, items[0].WatchStatus);
     }
 
     [Fact]
