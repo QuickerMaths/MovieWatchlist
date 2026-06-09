@@ -121,6 +121,59 @@ public class WatchlistEndpointTests(
      */
 
     [Fact]
+    public async Task GetWatchlistItemById_Returns200AndSingleItem_WhenAuthorized()
+    {
+        const int movieId = 1;
+        await SeedAsync(new MovieWatchlistItem
+        {
+            UserId = TestAuthHandler.TestUserId,
+            MovieId = movieId,
+            WatchStatus = WatchStatus.WantToWatch
+        });
+        
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.GetAsync($"watchlist/1", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        
+        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
+        
+        Assert.NotNull(items);
+        Assert.Single(items);
+        Assert.Equal(WatchStatus.WantToWatch, items[0].WatchStatus);
+    }
+
+    [Fact]
+    public async Task GetWatchlistItemById_Returns404WhenItemIsNotFound_WhenAuthorized()
+    {
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.GetAsync($"watchlist/1", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+    
+    [Fact]
+    public async Task? GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthorized()
+    {
+        await SeedAsync(new MovieWatchlistItem
+        {
+            Id = "other-users-item",
+            UserId = "otherUsersId",
+            MovieId = 1,
+            WatchStatus = WatchStatus.Finished
+        });
+        
+        var client = _authFactory.CreateClient();
+        
+        var response = await client.GetAsync($"watchlist/other-users-item", TestContext.Current.CancellationToken);
+        
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+
+    [Fact]
     public async Task GetWatchlistItemById_Returns401_WhenUnauthorized()
     {
         var client = _factory.CreateClient();
