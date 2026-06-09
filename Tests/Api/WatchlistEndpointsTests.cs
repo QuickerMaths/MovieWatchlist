@@ -142,7 +142,7 @@ public class WatchlistEndpointTests(
      */
 
     [Fact]
-    public async Task GetWatchlistItemById_Returns200AndSingleItem_WhenAuthorized()
+    public async Task GetWatchlistItemById_Returns200AndSingleItem_WhenAuthenticated()
     {
         const int movieId = 1;
         await SeedAsync(new MovieWatchlistItem
@@ -166,7 +166,7 @@ public class WatchlistEndpointTests(
     }
 
     [Fact]
-    public async Task GetWatchlistItemById_Returns404WhenItemIsNotFound_WhenAuthorized()
+    public async Task GetWatchlistItemById_Returns404WhenItemIsNotFound_WhenAuthenticated()
     {
         var client = _authFactory.CreateClient();
         
@@ -176,7 +176,7 @@ public class WatchlistEndpointTests(
     }
     
     [Fact]
-    public async Task? GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthorized()
+    public async Task? GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
     {
         const string someOtherUserId = "some-other-user-id";
         await SeedAsync(new MovieWatchlistItem
@@ -210,7 +210,7 @@ public class WatchlistEndpointTests(
      */
 
     [Fact]
-    public async Task AddWatchlistItem_Returns201AndCreatedItem_WhenUnauthorized()
+    public async Task AddWatchlistItem_Returns201AndCreatedItem_WhenAuthenticated()
     {
         const int tmdbId = 1;
         var requestBody = new AddWatchlistItemRequest(TmbdId: tmdbId, WatchStatus.WantToWatch);
@@ -228,7 +228,7 @@ public class WatchlistEndpointTests(
     }
 
     [Fact]
-    public async Task AddWatchlistItem_Returns400WhenTmdbIdIsInvalid_WhenUnauthorized()
+    public async Task AddWatchlistItem_Returns400WhenTmdbIdIsInvalid_WhenAuthenticated()
     {
         var requestBody = new AddWatchlistItemRequest(TmbdId: 0, WatchStatus.WantToWatch);
         var client = _authFactory.CreateClient();
@@ -241,7 +241,7 @@ public class WatchlistEndpointTests(
     
     
     [Fact]
-    public async Task AddWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenUnauthorized()
+    public async Task AddWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenAuthenticated()
     {
         var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
         var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
@@ -255,7 +255,7 @@ public class WatchlistEndpointTests(
 
 
     [Fact]
-    public async Task AddWatchlistItem_Returns409WhenItemIsAlreadyInTheUsersList_WhenUnauthorized()
+    public async Task AddWatchlistItem_Returns409WhenItemIsAlreadyInTheUsersList_WhenAuthenticated()
     {
         await SeedAsync(new MovieWatchlistItem
         {
@@ -290,7 +290,7 @@ public class WatchlistEndpointTests(
      */
 
     [Fact]
-    public async Task UpdateWatchlistItem_Returns204_WhenUnauthorized()
+    public async Task UpdateWatchlistItem_Returns204_WhenAuthenticated()
     {
         var requestBody = new UpdateWatchlistItemRequest(WatchStatus: WatchStatus.Watching, Rating: null, Note: null);
         const string watchlistItemId = "items-id";
@@ -309,7 +309,7 @@ public class WatchlistEndpointTests(
     }
     
     [Fact]
-    public async Task UpdateWatchlistItem_Returns400_WhenRatingIsOutOfRange()
+    public async Task UpdateWatchlistItem_Returns400WhenRatingIsOutOfRange_WhenAuthenticated()
     {
         const string itemId = "my-item-id"; 
         await SeedAsync(new MovieWatchlistItem
@@ -332,7 +332,7 @@ public class WatchlistEndpointTests(
     }
     
     [Fact]
-    public async Task UpdateWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenUnauthorized()
+    public async Task UpdateWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenAuthenticated()
     {
         const string itemId = "my-item-id"; 
         var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
@@ -353,7 +353,7 @@ public class WatchlistEndpointTests(
     }
 
     [Fact]
-    public async Task UpdateWatchlistItem_Returns404WhenTheItemIsNotOwnedByTheUser_WhenUnauthorized()
+    public async Task UpdateWatchlistItem_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
     {
         var requestBody = new UpdateWatchlistItemRequest(WatchStatus: WatchStatus.Watching, Rating: null, Note: null);
         const string someOtherUserId = "some-other-user-id";
@@ -391,7 +391,7 @@ public class WatchlistEndpointTests(
      */
     
     [Fact]
-    public async Task DeleteWatchlistItem_Returns204_WhenAuthorized()
+    public async Task DeleteWatchlistItem_Returns204_WhenAuthenticated()
     {
         const string watchlistItemId = "items-id";
         await SeedAsync(new MovieWatchlistItem
@@ -409,7 +409,7 @@ public class WatchlistEndpointTests(
     }
     
     [Fact]
-    public async Task DeleteWatchlistItem_Returns204WhenTheItemIsNotOwnedByTheUser_WhenUnauthorized()
+    public async Task DeleteWatchlistItem_Returns204WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
     {
         const string watchlistItemId = "items-id";
         await SeedAsync(new MovieWatchlistItem
