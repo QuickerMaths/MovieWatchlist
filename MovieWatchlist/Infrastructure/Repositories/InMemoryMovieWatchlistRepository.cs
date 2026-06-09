@@ -79,4 +79,10 @@ public class InMemoryMovieWatchlistRepository : IWatchlistRepository<MovieWatchl
 
         return Task.CompletedTask;
     }
+
+    public Task Clear()
+    {
+        _items.Clear();
+        return Task.CompletedTask;
+    }
 }

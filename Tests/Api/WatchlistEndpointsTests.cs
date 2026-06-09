@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
+using MovieWatchlist.Infrastructure.Repositories;
 using Tests.Helpers;
 
 namespace Tests.Api;
@@ -14,7 +15,8 @@ public class WatchlistEndpointTests(
     WebApplicationFactory<Program> plainFactory)
     :
         IClassFixture<TestWebAppFactory>,
-        IClassFixture<WebApplicationFactory<Program>>
+        IClassFixture<WebApplicationFactory<Program>>,
+        IDisposable
 {
     private readonly TestWebAppFactory _authFactory = authFactory;
     private readonly WebApplicationFactory<Program> _factory = plainFactory;
@@ -23,6 +25,13 @@ public class WatchlistEndpointTests(
      * Tests for WatchlistItem GET request "/watchlist"
      * Lists the current user's items
      */
+
+    public void Dispose()
+    {
+        var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
+
+        repo.Clear();
+    }
 
     [Fact]
     public async Task GetWatchlistItem_Returns200WithAnEmptyList_WhenAuthenticated()
@@ -33,7 +42,7 @@ public class WatchlistEndpointTests(
         
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var items = await response.Content.ReadFromJsonAsync<List<object>>(TestContext.Current.CancellationToken);
+        var items = await response.Content.ReadFromJsonAsync<List<MovieWatchlistItem>>(TestContext.Current.CancellationToken);
         
         Assert.NotNull(items);
         Assert.Empty(items);
@@ -42,7 +51,7 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task GetWatchlistItem_Returns200WithAnListOfItems_WhenAuthenticated()
     {
-        var repo = _authFactory.Services.GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
+        var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
         await repo.AddAsync(new MovieWatchlistItem
         {
             UserId = TestAuthHandler.TestUserId,
