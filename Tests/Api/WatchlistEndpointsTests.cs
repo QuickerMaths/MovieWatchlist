@@ -33,6 +33,14 @@ public class WatchlistEndpointTests(
         repo.Clear();
     }
 
+    private async Task SeedAsync(params MovieWatchlistItem[] items)
+    {
+        var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
+
+        foreach (var item in items)
+            await repo.AddAsync(item);
+    }
+
     [Fact]
     public async Task GetWatchlistItem_Returns200WithAnEmptyList_WhenAuthenticated()
     {
@@ -52,13 +60,13 @@ public class WatchlistEndpointTests(
     public async Task GetWatchlistItem_Returns200WithAnListOfItems_WhenAuthenticated()
     {
         var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
-        await repo.AddAsync(new MovieWatchlistItem
+        await SeedAsync(new MovieWatchlistItem
         {
+            Id = "somerandomId",
             UserId = TestAuthHandler.TestUserId,
             MovieId = 1,
             WatchStatus = WatchStatus.WantToWatch,
-            Id = "randomId",
-            AddedAt = DateTime.Now
+            AddedAt = default
         });
         var client = _authFactory.CreateClient();
         
