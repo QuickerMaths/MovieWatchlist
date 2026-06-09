@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
 using MovieWatchlist.Infrastructure.Repositories;
@@ -23,14 +24,15 @@ public class WatchlistEndpointTests(
     
     public void Dispose()
     {
-        var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
-
+        var repo = (InMemoryMovieWatchlistRepository)_authFactory.Services
+            .GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
+        
         repo.Clear();
     }
 
     private async Task SeedAsync(params MovieWatchlistItem[] items)
     {
-        var repo = _authFactory.Services.GetRequiredService<InMemoryMovieWatchlistRepository>();
+        var repo = _authFactory.Services.GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
 
         foreach (var item in items)
             await repo.AddAsync(item);
