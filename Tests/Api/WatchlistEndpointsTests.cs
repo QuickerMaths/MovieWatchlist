@@ -9,6 +9,8 @@ using Tests.Helpers;
 
 namespace Tests.Api;
 
+// TODO: create correct DTOs rather that referencing a model in repo
+
 public class WatchlistEndpointTests(
     TestWebAppFactory authFactory,
     WebApplicationFactory<Program> plainFactory)
@@ -61,11 +63,9 @@ public class WatchlistEndpointTests(
     {
         await SeedAsync(new MovieWatchlistItem
         {
-            Id = "somerandomId",
             UserId = TestAuthHandler.TestUserId,
             MovieId = 1,
-            WatchStatus = WatchStatus.WantToWatch,
-            AddedAt = default
+            WatchStatus = WatchStatus.WantToWatch
         });
         var client = _authFactory.CreateClient();
         
@@ -85,18 +85,14 @@ public class WatchlistEndpointTests(
     {
         await SeedAsync(new MovieWatchlistItem
         {
-            Id = "somerandomId",
             UserId = TestAuthHandler.TestUserId,
             MovieId = 1,
             WatchStatus = WatchStatus.WantToWatch,
-            AddedAt = default
         },new MovieWatchlistItem
         {
-            Id = "somerandomId2",
             UserId = TestAuthHandler.TestUserId,
             MovieId = 2,
             WatchStatus = WatchStatus.Finished,
-            AddedAt = default
         });
         var client = _authFactory.CreateClient();
         
