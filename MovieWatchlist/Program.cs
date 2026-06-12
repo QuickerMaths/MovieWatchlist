@@ -1,11 +1,19 @@
+using MovieWatchlist.Api.Endpoints;
 using MovieWatchlist.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure();
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+
+app.MapWatchlistEndpoints();
+app.MapMovieEndpoints();
+app.MapAuthEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
@@ -14,11 +22,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
-
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+public partial class Program { };
