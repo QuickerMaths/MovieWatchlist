@@ -1,20 +1,22 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace Tests.Helpers;
 
-public class TestWebAppFactory: WebApplicationFactory<Program>
+public abstract class TestWebAppFactory: WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureTestServices(services =>
+        builder.ConfigureAppConfiguration((_, config) =>
         {
-            services.AddAuthentication(TestAuthHandler.SchemaName)
-                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                    TestAuthHandler.SchemaName, _ => { });
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["JWTSettings:Key"] = "test-signing-key-at-least-32-bytes-long-0123456789",
+                ["JWTSettings:Issuer"]        = "MovieWatchlist.Tests",
+                ["JWTSettings:Audience"]      = "MovieWatchlist.Tests",
+                ["JWTSettings:ExpiryMinutes"] = "60",
+            });
         });
     }
 }
