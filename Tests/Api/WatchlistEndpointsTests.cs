@@ -12,15 +12,15 @@ using Tests.Helpers;
 namespace Tests.Api;
 
 public class WatchlistEndpointTests(
-    TestWebAppFactory authFactory,
-    WebApplicationFactory<Program> plainFactory)
+    RealAuthWebAppFactory authFactory,
+    FakeAuthWebAppFactory plainFactory)
     :
-        IClassFixture<TestWebAppFactory>,
-        IClassFixture<WebApplicationFactory<Program>>,
+        IClassFixture<RealAuthWebAppFactory>,
+        IClassFixture<FakeAuthWebAppFactory>,
         IDisposable
 {
-    private readonly TestWebAppFactory _authFactory = authFactory;
-    private readonly WebApplicationFactory<Program> _factory = plainFactory;
+    private readonly RealAuthWebAppFactory _authFactory = authFactory;
+    private readonly FakeAuthWebAppFactory _factory = plainFactory;
     
     public void Dispose()
     {

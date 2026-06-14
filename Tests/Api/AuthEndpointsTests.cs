@@ -7,8 +7,9 @@ using Tests.Helpers;
 namespace Tests.Api;
 
 
-public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class AuthEndpointsTests(RealAuthWebAppFactory authFactory) : IClassFixture<RealAuthWebAppFactory>
 {
+    private readonly RealAuthWebAppFactory _authFactory = authFactory;
     private static string UniqueEmail() => $"user-{Guid.NewGuid():N}@example.com";
     private const string ValidPassword = "Passw0rd!";
 
@@ -20,7 +21,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Register_Returns200_WhenCredentialsAreValid()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var body = new { email = UniqueEmail(), password = ValidPassword };
 
         var response = await client.PostAsJsonAsync(
@@ -32,7 +33,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Register_Returns400_WhenPasswordIsTooWeak()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var body = new { email = UniqueEmail(), password = "123" }; // violates default rules
 
         var response = await client.PostAsJsonAsync(
@@ -49,7 +50,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Login_Returns200AndToken_WhenCredentialsAreValid()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var creds = new { email = UniqueEmail(), password = ValidPassword };
         var ct = TestContext.Current.CancellationToken;
 
@@ -66,7 +67,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Login_Returns401_WhenCredentialsAreInvalid()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var creds = new { email = UniqueEmail(), password = "WrongPass1!" }; // never registered
 
         var response = await client.PostAsJsonAsync(
@@ -78,7 +79,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Token_GrantsAccessToProtectedEndpoint()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var creds = new { email = UniqueEmail(), password = ValidPassword };
         var ct = TestContext.Current.CancellationToken;
 
@@ -97,7 +98,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Logout_Returns401_WhenUnauthenticated()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
 
         var response = await client.PostAsync(
             "/auth/logout", null, TestContext.Current.CancellationToken);
@@ -114,7 +115,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Logout_Returns200_WhenAuthenticated()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var creds = new { email = UniqueEmail(), password = ValidPassword };
         var ct = TestContext.Current.CancellationToken;
 
@@ -133,7 +134,7 @@ public class AuthEndpointsTests(WebApplicationFactory<Program> factory) : IClass
     [Fact]
     public async Task Logout_RevokesToken_SoItNoLongerGrantsAccess()
     {
-        var client = factory.CreateClient();
+        var client = _authFactory.CreateClient();
         var creds = new { email = UniqueEmail(), password = ValidPassword };
         var ct = TestContext.Current.CancellationToken;
 

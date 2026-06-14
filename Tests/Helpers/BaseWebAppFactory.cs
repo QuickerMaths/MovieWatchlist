@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Tests.Helpers;
 
-public abstract class TestWebAppFactory: WebApplicationFactory<Program>
+public abstract class BaseWebAppFactory: WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

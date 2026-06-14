@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests.Helpers;
 
-public class FakeAuthWebAppFactory : TestWebAppFactory
+public class FakeAuthWebAppFactory : BaseWebAppFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
