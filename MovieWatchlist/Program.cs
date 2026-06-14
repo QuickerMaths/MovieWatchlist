@@ -1,15 +1,34 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using MovieWatchlist.Api.Endpoints;
 using MovieWatchlist.Infrastructure;
+using MovieWatchlist.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure();
-builder.Services.AddAuthentication();
+builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("JWTSettings"));
+
+var jwtSettings = builder.Configuration.GetSection("JWTSettings").Get<JWTSettings>()
+                  ?? throw new InvalidOperationException("JWTSettings section is missing.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,            ValidIssuer = jwtSettings.Issuer,
+            ValidateAudience = true,          ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+        };
+    });
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
 
 app.MapWatchlistEndpoints();
 app.MapMovieEndpoints();
