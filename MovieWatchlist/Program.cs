@@ -34,6 +34,9 @@ app.MapWatchlistEndpoints();
 app.MapMovieEndpoints();
 app.MapAuthEndpoints();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
