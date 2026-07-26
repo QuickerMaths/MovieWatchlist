@@ -9,9 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddInfrastructure();
-builder.Services.Configure<JWTSettings>(builder.Configuration.GetSection("JWTSettings"));
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JWTSettings"));
 
-var jwtSettings = builder.Configuration.GetSection("JWTSettings").Get<JWTSettings>()
+var jwtSettings = builder.Configuration.GetSection("JWTSettings").Get<JwtSettings>()
                   ?? throw new InvalidOperationException("JWTSettings section is missing.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
