@@ -12,15 +12,15 @@ using Tests.Helpers;
 namespace Tests.Api;
 
 public class WatchlistEndpointTests(
-    RealAuthWebAppFactory authFactory,
-    FakeAuthWebAppFactory plainFactory)
+    FakeAuthWebAppFactory authFactory,
+    RealAuthWebAppFactory plainFactory)
     :
-        IClassFixture<RealAuthWebAppFactory>,
         IClassFixture<FakeAuthWebAppFactory>,
+        IClassFixture<RealAuthWebAppFactory>,
         IDisposable
 {
-    private readonly RealAuthWebAppFactory _authFactory = authFactory;
-    private readonly FakeAuthWebAppFactory _factory = plainFactory;
+    private readonly FakeAuthWebAppFactory _authFactory = authFactory;
+    private readonly RealAuthWebAppFactory _factory = plainFactory;
     
     public void Dispose()
     {
@@ -368,7 +368,7 @@ public class WatchlistEndpointTests(
         });
         var client = _authFactory.CreateClient();
         
-        var response = await client.PutAsJsonAsync($"$watchlist/{someOtherUserId}", requestBody, TestContext.Current.CancellationToken);
+        var response = await client.PutAsJsonAsync($"watchlist/{someOtherUserId}", requestBody, TestContext.Current.CancellationToken);
         
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
