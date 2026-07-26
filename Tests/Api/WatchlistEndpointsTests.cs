@@ -7,6 +7,7 @@ using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
 using MovieWatchlist.Infrastructure.Repositories;
+using NSubstitute;
 using Tests.Helpers;
 
 namespace Tests.Api;
@@ -146,25 +147,25 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task GetWatchlistItemById_Returns200AndSingleItem_WhenAuthenticated()
     {
-        const int movieId = 1;
+        const string itemId = "item-1";
         await SeedAsync(new MovieWatchlistItem
         {
+            Id = itemId,
             UserId = TestAuthHandler.TestUserId,
-            MovieId = movieId,
+            MovieId = 1,
             WatchStatus = WatchStatus.WantToWatch
         });
-        
+
         var client = _authFactory.CreateClient();
-        
-        var response = await client.GetAsync($"watchlist/1", TestContext.Current.CancellationToken);
-        
+
+        var response = await client.GetAsync($"/watchlist/{itemId}", TestContext.Current.CancellationToken);
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(items);
-        Assert.Single(items);
-        Assert.Equal(WatchStatus.WantToWatch, items[0].WatchStatus);
+
+        var item = await response.Content.ReadFromJsonAsync<WatchlistItemResponse>(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(item);
+        Assert.Equal(WatchStatus.WantToWatch, item.WatchStatus);
     }
 
     [Fact]
@@ -178,7 +179,7 @@ public class WatchlistEndpointTests(
     }
     
     [Fact]
-    public async Task? GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
+    public async Task GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
     {
         const string someOtherUserId = "some-other-user-id";
         await SeedAsync(new MovieWatchlistItem
@@ -215,18 +216,26 @@ public class WatchlistEndpointTests(
     public async Task AddWatchlistItem_Returns201AndCreatedItem_WhenAuthenticated()
     {
         const int tmdbId = 1;
+        _authFactory.TmdbClient.GetByIdAsync(tmdbId, Arg.Any<CancellationToken>())
+            .Returns(new Movie
+            {
+                TmdbId = tmdbId,
+                Title = "inception",
+                Overview = "inception movie",
+                PosterPath = "poster-path",
+                ReleaseDate = new DateTime(2010, 7, 16)
+            });
         var requestBody = new AddWatchlistItemRequest(TmbdId: tmdbId, WatchStatus.WantToWatch);
         var client = _authFactory.CreateClient();
-     
+
         var response = await client.PostAsJsonAsync("/watchlist", requestBody, cancellationToken: TestContext.Current.CancellationToken);
-        
+
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        
-        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(items);
-        Assert.Single(items);
-        Assert.Contains(items, i => i.Movie.TmdbId == tmdbId);
+
+        var item = await response.Content.ReadFromJsonAsync<WatchlistItemResponse>(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(item);
+        Assert.Equal(tmdbId, item.Movie.TmdbId);
     }
 
     [Fact]
@@ -245,7 +254,7 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task AddWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenAuthenticated()
     {
-        var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
+        var json = """{ "tmbdId": 1, "status": "NotAStatus" }""";
         var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
         var client = _authFactory.CreateClient();
 
@@ -336,8 +345,8 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task UpdateWatchlistItem_Returns400WhenWatchStatusIsNotAValidValue_WhenAuthenticated()
     {
-        const string itemId = "my-item-id"; 
-        var json = """{ "tmdbId": 1, "watchStatus": "NotAStatus" }""";
+        const string itemId = "my-item-id";
+        var json = """{ "watchStatus": "NotAStatus" }""";
         var requestBody = new StringContent(json, Encoding.UTF8, "application/json");
         await SeedAsync(new MovieWatchlistItem
         {
@@ -348,8 +357,8 @@ public class WatchlistEndpointTests(
         });
         var client = _authFactory.CreateClient();
 
-        var response = await client.PutAsJsonAsync(
-            $"watchlist/{itemId}", requestBody, TestContext.Current.CancellationToken);
+        var response = await client.PutAsync(
+            $"/watchlist/{itemId}", requestBody, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
