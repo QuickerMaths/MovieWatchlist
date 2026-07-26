@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MovieWatchlist.Application.Contracts;
+using MovieWatchlist.Infrastructure.Identity;
 
 namespace MovieWatchlist.Api.Endpoints;
 
@@ -25,7 +27,22 @@ public static class AuthEndpoints
          * Endpoint for register POST request "/auth/register"
          * Register a new user
          */
-        group.MapPost("register", ([FromBody] RegisterRequest request) => Results.Ok());
+        group.MapPost("register", async (
+            [FromBody] RegisterRequest request,
+            UserManager<ApplicationUser> userManager) =>
+        {
+            var user = new ApplicationUser { UserName = request.Email, Email = request.Email };
+            var result = await userManager.CreateAsync(user, request.Password);
+
+            if (result.Succeeded)
+                return Results.Ok();
+
+            var errors = result.Errors
+                .GroupBy(e => e.Code)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.Description).ToArray());
+
+            return Results.ValidationProblem(errors);
+        });
 
         return app;
     }
