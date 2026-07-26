@@ -5,12 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.Movie;
 using MovieWatchlist.Domain.Entities;
+using Tests.Helpers;
 
 namespace Tests.Api;
 
-public class MovieEndpointsTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class MovieEndpointsTests(RealAuthWebAppFactory factory) : IClassFixture<RealAuthWebAppFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory = factory;
+    private readonly RealAuthWebAppFactory _factory = factory;
     
     private async Task SeedAsync(params Movie[] items)
     {

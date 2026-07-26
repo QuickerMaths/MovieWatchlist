@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests.Helpers;
 
-public class TestWebAppFactory: WebApplicationFactory<Program>
+public class FakeAuthWebAppFactory : BaseWebAppFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
+
         builder.ConfigureTestServices(services =>
         {
             services.AddAuthentication(TestAuthHandler.SchemaName)
