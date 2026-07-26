@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Application.Services;
 using MovieWatchlist.Domain.Entities;
@@ -46,19 +47,66 @@ public static class WatchlistEndpoints
          * Endpoint for WatchlistItem POST request "/watchlist"
          * Add a movie to the watchlist
          */
-        group.MapPost(string.Empty,       ([FromBody] AddWatchlistItemRequest request) => Results.Ok());
-        
+        group.MapPost(string.Empty, async (
+            [FromBody] AddWatchlistItemRequest request,
+            ClaimsPrincipal user,
+            WatchlistService watchlist,
+            IWatchlistRepository<MovieWatchlistItem> watchlistRepo,
+            CancellationToken ct) =>
+        {
+            if (request.TmbdId <= 0)
+                return Results.BadRequest();
+
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            if (await watchlistRepo.ExistsAsync(userId, request.TmbdId))
+                return Results.Conflict();
+
+            var item = await watchlist.AddItemAsync(userId, request, ct);
+            return Results.Created($"/watchlist/{item.Id}", item);
+        });
+
         /*
          * Endpoint for WatchlistItem PUT request "/watchlist/{id}"
          * Update status / rating / note
          */
-        group.MapPut("/{id}", ([FromRoute(Name = "id")] string id, [FromBody] UpdateWatchlistItemRequest request) => Results.Ok());
-        
+        group.MapPut("/{id}", async (
+            [FromRoute(Name = "id")] string id,
+            [FromBody] UpdateWatchlistItemRequest request,
+            ClaimsPrincipal user,
+            WatchlistService watchlist,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            try
+            {
+                await watchlist.UpdateItemAsync(id, userId, request, ct);
+                return Results.NoContent();
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return Results.BadRequest();
+            }
+            catch (InvalidOperationException)
+            {
+                return Results.NotFound();
+            }
+        });
+
         /*
          * Endpoint for WatchlistItem DELETE request "/watchlist/{id}"
          * Remove an item
          */
-        group.MapDelete("/{id}", ([FromRoute(Name = "id")] string id) => Results.NoContent());
+        group.MapDelete("/{id}", async (
+            [FromRoute(Name = "id")] string id,
+            ClaimsPrincipal user,
+            WatchlistService watchlist,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            await watchlist.DeleteItemAsync(id, userId, ct);
+            return Results.NoContent();
+        });
 
         return app;
     }
