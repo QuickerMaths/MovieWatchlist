@@ -22,6 +22,7 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddSingleton<ITokenService, JwtTokenService>();
+        services.AddSingleton<IRevokedTokenStore, InMemoryRevokedTokenStore>();
 
         return services;
     }

@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MovieWatchlist.Application.Abstractions;
@@ -33,7 +35,24 @@ public static class AuthEndpoints
          * Endpoint for logout POST request "/auth/logout"
          * Logs out the user, revokes the token
          */
-        group.MapPost("logout", Results.NoContent);
+        group.MapPost("logout", async (
+            ClaimsPrincipal user,
+            IRevokedTokenStore revokedTokens,
+            CancellationToken ct) =>
+        {
+            var jti = user.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            if (jti is not null)
+            {
+                var expiresUtc = user.FindFirstValue(JwtRegisteredClaimNames.Exp) is { } exp
+                                 && long.TryParse(exp, out var seconds)
+                    ? DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime
+                    : DateTime.UtcNow;
+
+                await revokedTokens.RevokeAsync(jti, expiresUtc, ct);
+            }
+
+            return Results.Ok();
+        }).RequireAuthorization();
         
         /*
          * Endpoint for register POST request "/auth/register"
