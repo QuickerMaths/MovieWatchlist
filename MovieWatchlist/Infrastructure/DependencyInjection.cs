@@ -15,8 +15,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddSingleton<IMovieRepository<Movie>, InMemoryMovieRepository>();
-        services.AddSingleton<IWatchlistRepository<MovieWatchlistItem>, InMemoryMovieWatchlistRepository>();
+        services.AddScoped<IMovieRepository<Movie>, EfMovieRepository>();
+        services.AddScoped<IWatchlistRepository<MovieWatchlistItem>, EfWatchlistRepository>();
 
         // TODO: in-memory store as a placeholder; database-setup issue swaps in SQL Server + migrations.
         services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("MovieWatchlist"));
