@@ -1,8 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MovieWatchlist.Api.Endpoints;
+using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Infrastructure;
 using MovieWatchlist.Options;
 
@@ -26,6 +29,19 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.Key))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var revokedTokens = context.HttpContext.RequestServices
+                    .GetRequiredService<IRevokedTokenStore>();
+                var jti = context.Principal?.FindFirstValue(JwtRegisteredClaimNames.Jti);
+
+                if (jti is not null && await revokedTokens.IsRevokedAsync(jti, context.HttpContext.RequestAborted))
+                    context.Fail("Token has been revoked.");
+            }
         };
     });
 builder.Services.AddAuthorization();
