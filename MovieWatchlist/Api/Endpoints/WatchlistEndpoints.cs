@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
+using MovieWatchlist.Application.Services;
+using MovieWatchlist.Domain.Entities;
 
 namespace MovieWatchlist.Api.Endpoints;
 
@@ -13,13 +16,31 @@ public static class WatchlistEndpoints
          * Endpoint for WatchlistItem GET request "/watchlist"
          * Lists the current user's items
          */
-        group.MapGet(string.Empty,       () => Results.Ok());
-        
+        group.MapGet(string.Empty, async (
+            ClaimsPrincipal user,
+            WatchlistService watchlist,
+            [FromQuery] WatchStatus? status,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var items = await watchlist.GetItemsAsync(userId, status, ct);
+            return Results.Ok(items);
+        });
+
         /*
          * Endpoint for WatchlistItem GET request "/watchlist/{id}"
          * Get a single watchlist item by Id
          */
-        group.MapGet("/{id}",       ([FromRoute(Name = "id")] string id) => Results.Ok());
+        group.MapGet("/{id}", async (
+            [FromRoute(Name = "id")] string id,
+            ClaimsPrincipal user,
+            WatchlistService watchlist,
+            CancellationToken ct) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var item = await watchlist.GetItemByIdAsync(id, userId, ct);
+            return item is null ? Results.NotFound() : Results.Ok(item);
+        });
         
         /*
          * Endpoint for WatchlistItem POST request "/watchlist"

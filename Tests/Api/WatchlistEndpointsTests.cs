@@ -146,25 +146,25 @@ public class WatchlistEndpointTests(
     [Fact]
     public async Task GetWatchlistItemById_Returns200AndSingleItem_WhenAuthenticated()
     {
-        const int movieId = 1;
+        const string itemId = "item-1";
         await SeedAsync(new MovieWatchlistItem
         {
+            Id = itemId,
             UserId = TestAuthHandler.TestUserId,
-            MovieId = movieId,
+            MovieId = 1,
             WatchStatus = WatchStatus.WantToWatch
         });
-        
+
         var client = _authFactory.CreateClient();
-        
-        var response = await client.GetAsync($"watchlist/1", TestContext.Current.CancellationToken);
-        
+
+        var response = await client.GetAsync($"/watchlist/{itemId}", TestContext.Current.CancellationToken);
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
-        var items = await response.Content.ReadFromJsonAsync<List<WatchlistItemResponse>>(TestContext.Current.CancellationToken);
-        
-        Assert.NotNull(items);
-        Assert.Single(items);
-        Assert.Equal(WatchStatus.WantToWatch, items[0].WatchStatus);
+
+        var item = await response.Content.ReadFromJsonAsync<WatchlistItemResponse>(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(item);
+        Assert.Equal(WatchStatus.WantToWatch, item.WatchStatus);
     }
 
     [Fact]
@@ -178,7 +178,7 @@ public class WatchlistEndpointTests(
     }
     
     [Fact]
-    public async Task? GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
+    public async Task GetWatchlistItemById_Returns404WhenTheItemIsNotOwnedByTheUser_WhenAuthenticated()
     {
         const string someOtherUserId = "some-other-user-id";
         await SeedAsync(new MovieWatchlistItem
