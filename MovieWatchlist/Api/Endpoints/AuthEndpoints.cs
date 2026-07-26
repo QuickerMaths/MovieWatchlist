@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts;
 using MovieWatchlist.Infrastructure.Identity;
 
@@ -15,7 +16,18 @@ public static class AuthEndpoints
          * Endpoint for login POST request "/auth/login"
          * Log in, receive a bearer token
          */
-        group.MapPost("login", ([FromBody]LoginRequest request ) => Results.Ok());
+        group.MapPost("login", async (
+            [FromBody] LoginRequest request,
+            UserManager<ApplicationUser> userManager,
+            ITokenService tokenService) =>
+        {
+            var user = await userManager.FindByEmailAsync(request.Email);
+
+            if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
+                return Results.Unauthorized();
+
+            return Results.Ok(new { accessToken = tokenService.CreateToken(user) });
+        });
         
         /*
          * Endpoint for logout POST request "/auth/logout"

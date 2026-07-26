@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddIdentityCore<ApplicationUser>()
             .AddEntityFrameworkStores<AppDbContext>();
 
+        services.AddSingleton<ITokenService, JwtTokenService>();
+
         return services;
     }
 }
