@@ -1,0 +1,230 @@
+{
+  "info": {
+    "name": "MovieWatchlist API",
+    "description": "MovieWatchlist .NET API. Run Auth > Login first — it stores {{accessToken}} for the protected routes. Add to watchlist stores {{itemId}} for the get/update/delete-by-id requests.\n\nWatchStatus enum: 0 = WantToWatch, 1 = Watching, 2 = Finished.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5246" },
+    { "key": "email", "value": "test@example.com" },
+    { "key": "password", "value": "Passw0rd!" },
+    { "key": "tmdbId", "value": "27205" },
+    { "key": "accessToken", "value": "" },
+    { "key": "itemId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "200 on success, 400 if the password is too weak. Re-running with the same email returns 400 (already registered) — that's fine, just log in."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test('200 with a token', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "});",
+                  "pm.collectionVariables.set('accessToken', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "200 { accessToken } on success (stored into {{accessToken}}), 401 on bad credentials."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "200 and revokes the current token (its jti is denylisted). Any further use of the token returns 401."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Movies",
+      "item": [
+        {
+          "name": "Search",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movies/search?query=inception",
+              "host": ["{{baseUrl}}"],
+              "path": ["movies", "search"],
+              "query": [{ "key": "query", "value": "inception" }]
+            },
+            "description": "200 with a list of movies from TMDB. 400 if query is empty. Requires Tmdb:ApiKey in user secrets."
+          }
+        },
+        {
+          "name": "Get by TMDB id",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/movies/{{tmdbId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["movies", "{{tmdbId}}"]
+            },
+            "description": "200 with the movie. 400 if the id is not an integer, 404 if not found."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Watchlist",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["watchlist"]
+            },
+            "description": "200 with the current user's items."
+          }
+        },
+        {
+          "name": "List (filter by status)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/watchlist?status=Finished",
+              "host": ["{{baseUrl}}"],
+              "path": ["watchlist"],
+              "query": [{ "key": "status", "value": "Finished" }]
+            },
+            "description": "200 filtered by status (WantToWatch | Watching | Finished)."
+          }
+        },
+        {
+          "name": "Add",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 created', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json && json.id) { pm.collectionVariables.set('itemId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tmbdId\": {{tmdbId}},\n  \"status\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["watchlist"]
+            },
+            "description": "201 with the created item (its id is stored into {{itemId}}). 400 invalid id/status, 409 if already in the list. Note: the body field is 'tmbdId' (matches the API's DTO)."
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/watchlist/{{itemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["watchlist", "{{itemId}}"]
+            },
+            "description": "200 with the item, 404 if missing or not owned by the user."
+          }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"watchStatus\": 2,\n  \"rating\": 9,\n  \"note\": \"great\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/watchlist/{{itemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["watchlist", "{{itemId}}"]
+            },
+            "description": "204 on success. 400 if rating is out of 1-10 or status invalid, 404 if not owned."
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/watchlist/{{itemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["watchlist", "{{itemId}}"]
+            },
+            "description": "204 (idempotent — 204 even if the item is not owned/does not exist)."
+          }
+        }
+      ]
+    }
+  ]
+}
