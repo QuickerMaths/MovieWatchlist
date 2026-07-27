@@ -35,11 +35,14 @@ public abstract class BaseWebAppFactory: WebApplicationFactory<Program>
         {
             services.RemoveAll<ITmdbClient>();
             services.AddSingleton(TmdbClient);
+            
+            var toRemove = services.Where(d =>
+                d.ServiceType == typeof(AppDbContext) ||
+                d.ServiceType == typeof(DbContextOptions) ||
+                (d.ServiceType.IsGenericType &&
+                 d.ServiceType.GetGenericArguments().Contains(typeof(AppDbContext)))).ToList();
 
-            // Swap the real (SQL Server) provider for a per-factory in-memory database.
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            if (descriptor is not null)
+            foreach (var descriptor in toRemove)
                 services.Remove(descriptor);
 
             services.AddDbContext<AppDbContext>(options =>

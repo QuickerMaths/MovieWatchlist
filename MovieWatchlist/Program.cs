@@ -2,11 +2,13 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MovieWatchlist.Api.Endpoints;
 using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Infrastructure;
+using MovieWatchlist.Infrastructure.Persistence;
 using MovieWatchlist.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +49,13 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (db.Database.IsRelational())
+        db.Database.Migrate();
+}
 
 app.MapWatchlistEndpoints();
 app.MapMovieEndpoints();
