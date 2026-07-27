@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MovieWatchlist.Application.Abstractions;
 using MovieWatchlist.Application.Contracts.MovieWatchlist;
 using MovieWatchlist.Domain.Entities;
-using MovieWatchlist.Infrastructure.Repositories;
+using MovieWatchlist.Infrastructure.Persistence;
 using NSubstitute;
 using Tests.Helpers;
 
@@ -25,15 +25,15 @@ public class WatchlistEndpointTests(
     
     public void Dispose()
     {
-        var repo = (InMemoryMovieWatchlistRepository)_authFactory.Services
-            .GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
-        
-        repo.Clear();
+        using var scope = _authFactory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.EnsureDeleted();
     }
 
     private async Task SeedAsync(params MovieWatchlistItem[] items)
     {
-        var repo = _authFactory.Services.GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
+        using var scope = _authFactory.Services.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<IWatchlistRepository<MovieWatchlistItem>>();
 
         foreach (var item in items)
             await repo.AddAsync(item);
